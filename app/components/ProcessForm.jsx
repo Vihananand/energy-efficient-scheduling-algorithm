@@ -1,3 +1,5 @@
+"use client";
+
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 
@@ -9,90 +11,114 @@ export default function ProcessForm({ onSubmit }) {
     e.preventDefault();
     onSubmit(processCount, algorithmType);
   };
-  
+
   return (
-    <motion.form 
-      onSubmit={handleSubmit}
-      className="w-full bg-zinc-900 rounded-xl p-6 shadow-lg"
+    <motion.div
+      className="bg-zinc-900 rounded-xl shadow-lg overflow-hidden"
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5, delay: 0.1 }}
+      transition={{ duration: 0.5 }}
     >
-      <div className="flex flex-col md:flex-row gap-6">
-        <div className="flex-1">
-          <label className="block mb-2 text-sm font-medium text-zinc-300">
-            Number of Processes
-          </label>
-          <input
-            type="range"
-            min="1"
-            max="10"
-            value={processCount}
-            onChange={(e) => setProcessCount(parseInt(e.target.value))}
-            className="w-full h-2 bg-zinc-700 rounded-lg appearance-none cursor-pointer accent-emerald-500"
-          />
-          <div className="mt-1 text-sm text-zinc-400 text-center">
-            {processCount} {processCount === 1 ? 'process' : 'processes'}
-          </div>
-        </div>
+      <div className="p-4 md:p-6">
+        <h2 className="text-xl font-semibold text-emerald-400 mb-4">Configure Simulation</h2>
         
-        <div className="flex-1">
-          <label className="block mb-2 text-sm font-medium text-zinc-300">
-            Scheduling Algorithm
-          </label>
-          <select
-            value={algorithmType}
-            onChange={(e) => setAlgorithmType(e.target.value)}
-            className="w-full px-4 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-zinc-300 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+        <form onSubmit={handleSubmit} className="space-y-5">
+          <div>
+            <label className="block text-zinc-300 mb-2">
+              Number of Processes (1-10)
+            </label>
+            <input
+              type="range"
+              min="1"
+              max="10"
+              value={processCount}
+              onChange={(e) => setProcessCount(parseInt(e.target.value))}
+              className="w-full h-2 bg-zinc-700 rounded-lg appearance-none cursor-pointer"
+            />
+            <div className="mt-2 text-right text-emerald-400 font-mono">{processCount}</div>
+          </div>
+          
+          <div>
+            <label className="block text-zinc-300 mb-2">
+              Scheduling Algorithm
+            </label>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-3">
+                <h3 className="font-medium text-zinc-400 text-sm">DVFS Variants</h3>
+                <div className="space-y-2">
+                  <AlgorithmOption id="ondemand" value="ondemand" name="Ondemand Governor" current={algorithmType} onChange={setAlgorithmType} />
+                  <AlgorithmOption id="conservative" value="conservative" name="Conservative Governor" current={algorithmType} onChange={setAlgorithmType} />
+                  <AlgorithmOption id="userspace" value="userspace" name="Userspace Governor" current={algorithmType} onChange={setAlgorithmType} />
+                </div>
+                
+                <h3 className="font-medium text-zinc-400 text-sm mt-4">DPM Algorithms</h3>
+                <div className="space-y-2">
+                  <AlgorithmOption id="dpm" value="dpm" name="Dynamic Power Management" current={algorithmType} onChange={setAlgorithmType} />
+                  <AlgorithmOption id="timeout" value="timeout" name="Timeout-based Sleep" current={algorithmType} onChange={setAlgorithmType} />
+                  <AlgorithmOption id="history" value="history" name="History-based Sleep" current={algorithmType} onChange={setAlgorithmType} />
+                  <AlgorithmOption id="tickless" value="tickless" name="Tickless Kernel" current={algorithmType} onChange={setAlgorithmType} />
+                </div>
+              </div>
+              
+              <div className="space-y-3">
+                <h3 className="font-medium text-zinc-400 text-sm">EAS Algorithms</h3>
+                <div className="space-y-2">
+                  <AlgorithmOption id="eas" value="eas" name="Energy-Aware Scheduling" current={algorithmType} onChange={setAlgorithmType} />
+                  <AlgorithmOption id="biglittle" value="biglittle" name="big.LITTLE Architecture" current={algorithmType} onChange={setAlgorithmType} />
+                </div>
+                
+                <h3 className="font-medium text-zinc-400 text-sm mt-4">ML-based Scheduling</h3>
+                <div className="space-y-2">
+                  <AlgorithmOption id="ml" value="ml" name="Machine Learning" current={algorithmType} onChange={setAlgorithmType} />
+                  <AlgorithmOption id="rl" value="rl" name="Reinforcement Learning" current={algorithmType} onChange={setAlgorithmType} />
+                </div>
+                
+                <h3 className="font-medium text-zinc-400 text-sm mt-4">Real-time Scheduling</h3>
+                <div className="space-y-2">
+                  <AlgorithmOption id="edf" value="edf" name="Earliest Deadline First" current={algorithmType} onChange={setAlgorithmType} />
+                  <AlgorithmOption id="rms" value="rms" name="Rate Monotonic" current={algorithmType} onChange={setAlgorithmType} />
+                </div>
+                
+                <h3 className="font-medium text-zinc-400 text-sm mt-4">Other Algorithms</h3>
+                <div className="space-y-2">
+                  <AlgorithmOption id="race" value="race" name="Race-to-Idle" current={algorithmType} onChange={setAlgorithmType} />
+                  <AlgorithmOption id="eerr" value="eerr" name="Energy-Efficient Round Robin" current={algorithmType} onChange={setAlgorithmType} />
+                  <AlgorithmOption id="mlfq" value="mlfq" name="Multi-level Feedback Queue" current={algorithmType} onChange={setAlgorithmType} />
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <motion.button
+            type="submit"
+            className="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-3 px-4 rounded-lg font-medium shadow-lg"
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
           >
-            <optgroup label="Real-Time Scheduling">
-              <option value="edf">Energy-aware Earliest Deadline First</option>
-              <option value="rms">Rate Monotonic Scheduling</option>
-            </optgroup>
-            
-            <optgroup label="DVFS">
-              <option value="dvfs">Dynamic Voltage and Frequency Scaling</option>
-              <option value="ondemand">Ondemand Governor</option>
-              <option value="conservative">Conservative Governor</option>
-              <option value="userspace">Userspace Governor</option>
-            </optgroup>
-            
-            <optgroup label="Dynamic Power Management">
-              <option value="dpm">Dynamic Power Management</option>
-              <option value="timeout">Timeout-based Sleep</option>
-              <option value="history">History-based Sleep</option>
-              <option value="tickless">Tickless Kernel</option>
-            </optgroup>
-            
-            <optgroup label="Energy-Aware Scheduling">
-              <option value="eas">Energy-Aware Scheduler</option>
-              <option value="biglittle">big.LITTLE Optimization</option>
-            </optgroup>
-            
-            <optgroup label="Machine Learning">
-              <option value="ml">Machine Learning-Based Scheduler</option>
-              <option value="rl">Reinforcement Learning Scheduler</option>
-            </optgroup>
-            
-            <optgroup label="Other Energy-Efficient Algorithms">
-              <option value="race">Race-to-Idle</option>
-              <option value="eerr">Energy-Efficient Round Robin</option>
-              <option value="mlfq">Multi-Level Feedback Queue</option>
-            </optgroup>
-          </select>
-        </div>
+            Start Simulation
+          </motion.button>
+        </form>
       </div>
-      
-      <div className="mt-6 flex justify-center">
-        <motion.button
-          type="submit"
-          className="px-6 py-3 bg-emerald-600 hover:bg-emerald-500 text-white font-medium rounded-lg transition-colors"
-          whileHover={{ scale: 1.03 }}
-          whileTap={{ scale: 0.97 }}
-        >
-          Initialize Simulation
-        </motion.button>
-      </div>
-    </motion.form>
+    </motion.div>
+  );
+}
+
+function AlgorithmOption({ id, value, name, current, onChange }) {
+  return (
+    <div className="flex items-center">
+      <input
+        type="radio"
+        id={id}
+        name="algorithm"
+        value={value}
+        checked={current === value}
+        onChange={() => onChange(value)}
+        className="w-4 h-4 text-emerald-500 bg-zinc-700 border-zinc-600 focus:ring-emerald-500 focus:ring-2"
+      />
+      <label htmlFor={id} className="ml-2 text-sm text-zinc-300">
+        {name}
+      </label>
+    </div>
   );
 } 

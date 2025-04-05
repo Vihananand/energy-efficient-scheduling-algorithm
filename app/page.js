@@ -193,28 +193,28 @@ export default function Home() {
   };
 
   return (
-    <div className="flex min-h-screen flex-col items-center bg-black text-white">
+    <div className="flex min-h-screen flex-col bg-black text-white">
       <Header />
       
-      <main className="container mx-auto px-4 py-8 flex-1">
+      <main className="flex-1 w-full px-4 py-6 md:py-8">
         <motion.h1
-          className="text-3xl font-bold text-center mb-8 text-emerald-400"
+          className="text-2xl md:text-3xl font-bold text-center mb-6 md:mb-8 text-emerald-400"
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
         >
-          Energy-Efficient CPU Scheduling Simulator
+          Energy-Efficient CPU Scheduler
         </motion.h1>
         
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-6">
           {processes.length === 0 ? (
             <div className="col-span-full">
               <ProcessForm onSubmit={handleFormSubmit} />
             </div>
           ) : (
             <>
-              <div className="lg:col-span-1">
-                <div className="bg-zinc-900 rounded-xl p-6 shadow-lg">
+              <div className="lg:col-span-1 order-2 lg:order-1">
+                <div className="bg-zinc-900 rounded-xl p-4 md:p-6 shadow-lg">
                   <h2 className="text-xl font-semibold text-emerald-400 mb-4">Scheduling Controls</h2>
                   
                   {!isRunning && (
@@ -271,7 +271,7 @@ export default function Home() {
                 </div>
               </div>
               
-              <div className="lg:col-span-2">
+              <div className="lg:col-span-2 order-1 lg:order-2">
                 <ProcessVisualizer 
                   processes={processes} 
                   algorithm={algorithm} 
@@ -283,7 +283,7 @@ export default function Home() {
         </div>
       </main>
       
-      <footer className="w-full py-4 border-t border-zinc-800">
+      <footer className="w-full py-4 border-t border-zinc-800 mt-auto">
         <div className="container mx-auto px-4 text-center text-zinc-500 text-sm">
           Energy-Efficient CPU Scheduling Simulator
         </div>

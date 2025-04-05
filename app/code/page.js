@@ -321,33 +321,546 @@ export default function CodePage() {
   
   return scheduledProcesses;
 }`,
-    // Additional algorithms abbreviated for space
     dpm: `export function dynamicPowerManagement(processes) {
-  // Implementation details...
+  const scheduledProcesses = [...processes];
+  
+  scheduledProcesses.sort((a, b) => a.arrivalTime - b.arrivalTime);
+  
+  let currentTime = 0;
+  let totalEnergyUsed = 0;
+  let idlePeriods = 0;
+  
+  scheduledProcesses.forEach(process => {
+    process.startTime = Math.max(currentTime, process.arrivalTime);
+    
+    // Calculate idle time before process
+    const idleTime = process.startTime - currentTime;
+    if (idleTime > 0) {
+      idlePeriods++;
+    }
+    
+    // Calculate energy usage based on process characteristics
+    // Lower energy for processes after idle periods
+    const powerStateMultiplier = idlePeriods > 2 ? 0.8 : 1.0;
+    process.energyUsage = process.burstTime * powerStateMultiplier;
+    totalEnergyUsed += process.energyUsage;
+    
+    // Apply power management strategies
+    process.dpmData = {
+      sleepState: idleTime > 5 ? 'Deep' : (idleTime > 2 ? 'Light' : 'Active'),
+      wakeCount: idlePeriods
+    };
+    
+    process.deadline = process.arrivalTime + process.burstTime + 6;
+    currentTime = process.startTime + process.burstTime;
+    
+    // Mark as executed
+    process.executed = process.burstTime;
+    process.status = 'completed';
+  });
+  
+  return {
+    updatedProcesses: scheduledProcesses,
+    energyUsed: totalEnergyUsed,
+    completionTime: currentTime
+  };
 }`,
     timeout: `export function timeoutBasedSleep(processes) {
-  // Implementation details...
+  const scheduledProcesses = [...processes];
+  
+  scheduledProcesses.sort((a, b) => a.arrivalTime - b.arrivalTime);
+  
+  let currentTime = 0;
+  let totalEnergyUsed = 0;
+  const timeoutThreshold = 3; // Time units before entering sleep
+  
+  scheduledProcesses.forEach(process => {
+    process.startTime = Math.max(currentTime, process.arrivalTime);
+    
+    // Calculate idle time before process
+    const idleTime = process.startTime - currentTime;
+    
+    // Apply timeout-based sleep strategy
+    let sleepState = 'None';
+    let energyFactor = 1.0;
+    
+    if (idleTime >= timeoutThreshold) {
+      sleepState = 'Deep';
+      energyFactor = 0.7;
+    } else if (idleTime > 0) {
+      sleepState = 'Light';
+      energyFactor = 0.85;
+    }
+    
+    process.energyUsage = process.burstTime * energyFactor;
+    totalEnergyUsed += process.energyUsage;
+    
+    process.dpmData = {
+      sleepState: sleepState,
+      wakeCount: sleepState !== 'None' ? 1 : 0
+    };
+    
+    process.deadline = process.arrivalTime + process.burstTime + 5;
+    currentTime = process.startTime + process.burstTime;
+    
+    // Mark as executed
+    process.executed = process.burstTime;
+    process.status = 'completed';
+  });
+  
+  return {
+    updatedProcesses: scheduledProcesses,
+    energyUsed: totalEnergyUsed,
+    completionTime: currentTime
+  };
 }`,
     history: `export function historyBasedSleep(processes) {
-  // Implementation details...
+  const scheduledProcesses = [...processes];
+  
+  scheduledProcesses.sort((a, b) => a.arrivalTime - b.arrivalTime);
+  
+  let currentTime = 0;
+  let totalEnergyUsed = 0;
+  let idleHistory = []; // Tracks recent idle periods
+  
+  scheduledProcesses.forEach(process => {
+    process.startTime = Math.max(currentTime, process.arrivalTime);
+    
+    // Calculate idle time before process
+    const idleTime = process.startTime - currentTime;
+    if (idleTime > 0) {
+      idleHistory.push(idleTime);
+      if (idleHistory.length > 3) idleHistory.shift();
+    }
+    
+    // Calculate average idle time based on history
+    const avgIdleTime = idleHistory.length > 0 
+      ? idleHistory.reduce((sum, time) => sum + time, 0) / idleHistory.length 
+      : 0;
+    
+    // Predict sleep state based on history
+    let sleepState = 'None';
+    let energyFactor = 1.0;
+    let wakeCount = 0;
+    
+    if (avgIdleTime > 5) {
+      sleepState = 'Deep';
+      energyFactor = 0.65;
+      wakeCount = 1;
+    } else if (avgIdleTime > 2) {
+      sleepState = 'Light';
+      energyFactor = 0.8;
+      wakeCount = 1;
+    }
+    
+    process.energyUsage = process.burstTime * energyFactor;
+    totalEnergyUsed += process.energyUsage;
+    
+    process.dpmData = {
+      sleepState: sleepState,
+      wakeCount: wakeCount
+    };
+    
+    process.deadline = process.arrivalTime + process.burstTime + 6;
+    currentTime = process.startTime + process.burstTime;
+    
+    // Mark as executed
+    process.executed = process.burstTime;
+    process.status = 'completed';
+  });
+  
+  return {
+    updatedProcesses: scheduledProcesses,
+    energyUsed: totalEnergyUsed,
+    completionTime: currentTime
+  };
 }`,
     tickless: `export function ticklessKernel(processes) {
-  // Implementation details...
+  const scheduledProcesses = [...processes];
+  
+  scheduledProcesses.sort((a, b) => a.arrivalTime - b.arrivalTime);
+  
+  let currentTime = 0;
+  let totalEnergyUsed = 0;
+  let tickSavings = 0;
+  
+  scheduledProcesses.forEach(process => {
+    process.startTime = Math.max(currentTime, process.arrivalTime);
+    
+    // Calculate idle time before process
+    const idleTime = process.startTime - currentTime;
+    
+    // In tickless kernel, longer idle periods save more energy
+    if (idleTime > 0) {
+      // Each tick we avoid saves energy
+      tickSavings += Math.floor(idleTime);
+    }
+    
+    // Apply tickless kernel strategy - processes can use deeper sleep states
+    let sleepState = 'None';
+    let energyFactor = 1.0;
+    
+    if (idleTime > 8) {
+      sleepState = 'DeepIdle';
+      energyFactor = 0.6;
+    } else if (idleTime > 4) {
+      sleepState = 'PowerDown';
+      energyFactor = 0.7;
+    } else if (idleTime > 0) {
+      sleepState = 'LightSleep';
+      energyFactor = 0.85;
+    }
+    
+    // Apply deeper sleep benefit for all processes in tickless system
+    const ticklessBonus = 1.0 - (Math.min(tickSavings, 10) * 0.01);
+    
+    process.energyUsage = process.burstTime * energyFactor * ticklessBonus;
+    totalEnergyUsed += process.energyUsage;
+    
+    process.dpmData = {
+      sleepState: sleepState,
+      wakeCount: sleepState !== 'None' ? 1 : 0
+    };
+    
+    process.deadline = process.arrivalTime + process.burstTime + 4;
+    currentTime = process.startTime + process.burstTime;
+    
+    // Mark as executed
+    process.executed = process.burstTime;
+    process.status = 'completed';
+  });
+  
+  return {
+    updatedProcesses: scheduledProcesses,
+    energyUsed: totalEnergyUsed,
+    completionTime: currentTime
+  };
 }`,
     eas: `export function energyAwareScheduler(processes) {
-  // Implementation details...
+  const scheduledProcesses = [...processes];
+  
+  scheduledProcesses.sort((a, b) => a.priority - b.priority);
+  
+  let currentTime = 0;
+  let totalEnergyUsed = 0;
+  
+  scheduledProcesses.forEach(process => {
+    process.startTime = Math.max(currentTime, process.arrivalTime);
+    
+    // EAS assigns tasks based on energy models
+    // Calculate energy impact based on process characteristics
+    let coreType = 'medium';
+    let energyImpact = 1.0;
+    
+    if (process.cpuUtilization > 80 || process.priority > 7) {
+      coreType = 'performance';
+      energyImpact = 1.5;
+    } else if (process.cpuUtilization < 40 && process.priority < 4) {
+      coreType = 'efficiency';
+      energyImpact = 0.6;
+    }
+    
+    // Calculate energy usage based on assigned core
+    const energyFactor = coreType === 'performance' ? 1.2 :
+                         coreType === 'efficiency' ? 0.7 : 1.0;
+    
+    process.energyUsage = process.burstTime * energyFactor;
+    totalEnergyUsed += process.energyUsage;
+    
+    process.easData = {
+      coreType: coreType,
+      energyImpact: energyImpact
+    };
+    
+    process.deadline = process.arrivalTime + process.burstTime + 5;
+    currentTime = process.startTime + process.burstTime;
+    
+    // Mark as executed
+    process.executed = process.burstTime;
+    process.status = 'completed';
+  });
+  
+  return {
+    updatedProcesses: scheduledProcesses,
+    energyUsed: totalEnergyUsed,
+    completionTime: currentTime
+  };
 }`,
     biglittle: `export function bigLittleOptimization(processes) {
-  // Implementation details...
+  const scheduledProcesses = [...processes];
+  
+  // Sort by a combination of priority and CPU utilization
+  scheduledProcesses.sort((a, b) => {
+    const aScore = (a.priority * 0.6) + (a.cpuUtilization * 0.4);
+    const bScore = (b.priority * 0.6) + (b.cpuUtilization * 0.4);
+    return bScore - aScore;
+  });
+  
+  let currentTime = 0;
+  let totalEnergyUsed = 0;
+  
+  // Define big and LITTLE core characteristics
+  const cores = {
+    big: { powerFactor: 1.8, speedFactor: 2.0, count: 4 },
+    LITTLE: { powerFactor: 0.5, speedFactor: 0.8, count: 4 }
+  };
+  
+  let bigCoresInUse = 0;
+  let littleCoresInUse = 0;
+  
+  scheduledProcesses.forEach(process => {
+    process.startTime = Math.max(currentTime, process.arrivalTime);
+    
+    // Decide core type based on process characteristics
+    let assignedCore;
+    let energyImpact;
+    
+    if ((process.cpuUtilization > 70 || process.priority > 7) && bigCoresInUse < cores.big.count) {
+      assignedCore = 'big';
+      bigCoresInUse++;
+      energyImpact = 1.6;
+    } else {
+      assignedCore = 'LITTLE';
+      littleCoresInUse++;
+      energyImpact = 0.5;
+    }
+    
+    // Calculate energy and time based on core type
+    const powerFactor = cores[assignedCore].powerFactor;
+    const speedFactor = cores[assignedCore].speedFactor;
+    
+    const originalBurstTime = process.burstTime;
+    process.burstTime = Math.max(Math.ceil(originalBurstTime / speedFactor), 1);
+    
+    process.energyUsage = originalBurstTime * powerFactor;
+    totalEnergyUsed += process.energyUsage;
+    
+    process.easData = {
+      coreType: assignedCore,
+      energyImpact: energyImpact
+    };
+    
+    process.deadline = process.arrivalTime + process.burstTime + 
+                      (assignedCore === 'LITTLE' ? 8 : 4);
+    
+    currentTime = process.startTime + process.burstTime;
+    
+    // Mark as executed
+    process.executed = process.burstTime;
+    process.status = 'completed';
+  });
+  
+  return {
+    updatedProcesses: scheduledProcesses,
+    energyUsed: totalEnergyUsed,
+    completionTime: currentTime
+  };
 }`,
     ml: `export function mlBasedScheduler(processes) {
-  // Implementation details...
+  const scheduledProcesses = [...processes];
+  
+  scheduledProcesses.sort((a, b) => a.arrivalTime - b.arrivalTime);
+  
+  let currentTime = 0;
+  let totalEnergyUsed = 0;
+  
+  // Simulate ML model predictions
+  const predictPowerState = (process) => {
+    const features = [
+      process.burstTime / 10, // Normalized burst time
+      process.priority / 10,  // Normalized priority
+      process.cpuUtilization / 100, // Normalized utilization
+      process.isIOBound ? 1 : 0,
+      process.behaviorPattern / 5 // Normalized behavior pattern
+    ];
+    
+    // Simplified ML prediction logic
+    const sum = features.reduce((acc, val) => acc + val, 0);
+    const avg = sum / features.length;
+    
+    if (avg > 0.7) return { state: 'High', factor: 1.3, confidence: 0.8 + (Math.random() * 0.2) };
+    if (avg < 0.3) return { state: 'Low', factor: 0.6, confidence: 0.7 + (Math.random() * 0.3) };
+    return { state: 'Medium', factor: 0.9, confidence: 0.6 + (Math.random() * 0.4) };
+  };
+  
+  scheduledProcesses.forEach(process => {
+    process.startTime = Math.max(currentTime, process.arrivalTime);
+    
+    // Get ML prediction for this process
+    const prediction = predictPowerState(process);
+    
+    // Apply ML prediction to scheduling decision
+    const energyFactor = prediction.factor;
+    
+    process.energyUsage = process.burstTime * energyFactor;
+    totalEnergyUsed += process.energyUsage;
+    
+    process.mlData = {
+      confidence: prediction.confidence,
+      powerState: prediction.state
+    };
+    
+    process.deadline = process.arrivalTime + process.burstTime + 5;
+    currentTime = process.startTime + process.burstTime;
+    
+    // Mark as executed
+    process.executed = process.burstTime;
+    process.status = 'completed';
+  });
+  
+  return {
+    updatedProcesses: scheduledProcesses,
+    energyUsed: totalEnergyUsed,
+    completionTime: currentTime
+  };
 }`,
     rl: `export function reinforcementLearningScheduler(processes) {
-  // Implementation details...
+  const scheduledProcesses = [...processes];
+  
+  scheduledProcesses.sort((a, b) => a.arrivalTime - b.arrivalTime);
+  
+  let currentTime = 0;
+  let totalEnergyUsed = 0;
+  
+  // Simulate RL agent's Q-table
+  const qTable = {
+    'high_priority': { 'performance': 0.9, 'balanced': 0.5, 'efficiency': 0.1 },
+    'medium_priority': { 'performance': 0.3, 'balanced': 0.8, 'efficiency': 0.4 },
+    'low_priority': { 'performance': 0.1, 'balanced': 0.4, 'efficiency': 0.9 }
+  };
+  
+  // RL decision making function
+  const chooseAction = (process) => {
+    let state;
+    if (process.priority >= 7) state = 'high_priority';
+    else if (process.priority >= 3) state = 'medium_priority';
+    else state = 'low_priority';
+    
+    // Choose action with highest Q-value
+    const actions = qTable[state];
+    let bestAction = 'balanced';
+    let bestValue = actions['balanced'];
+    
+    for (const [action, value] of Object.entries(actions)) {
+      if (value > bestValue) {
+        bestValue = value;
+        bestAction = action;
+      }
+    }
+    
+    // Add exploration factor for realistic RL behavior
+    if (Math.random() < 0.1) {
+      const possibleActions = ['performance', 'balanced', 'efficiency'];
+      bestAction = possibleActions[Math.floor(Math.random() * possibleActions.length)];
+    }
+    
+    return { action: bestAction, confidence: actions[bestAction] };
+  };
+  
+  scheduledProcesses.forEach(process => {
+    process.startTime = Math.max(currentTime, process.arrivalTime);
+    
+    // Get RL decision for this process
+    const decision = chooseAction(process);
+    
+    // Apply RL decision to energy and timing
+    let energyFactor, powerState;
+    
+    switch (decision.action) {
+      case 'performance':
+        energyFactor = 1.4;
+        powerState = 'High';
+        break;
+      case 'efficiency':
+        energyFactor = 0.7;
+        powerState = 'Low';
+        break;
+      default: // balanced
+        energyFactor = 1.0;
+        powerState = 'Medium';
+    }
+    
+    process.energyUsage = process.burstTime * energyFactor;
+    totalEnergyUsed += process.energyUsage;
+    
+    process.mlData = {
+      confidence: decision.confidence,
+      powerState: powerState
+    };
+    
+    process.deadline = process.arrivalTime + process.burstTime + 6;
+    currentTime = process.startTime + process.burstTime;
+    
+    // Mark as executed
+    process.executed = process.burstTime;
+    process.status = 'completed';
+  });
+  
+  return {
+    updatedProcesses: scheduledProcesses,
+    energyUsed: totalEnergyUsed,
+    completionTime: currentTime
+  };
 }`,
     rms: `export function rateMonotonicScheduling(processes) {
-  // Implementation details...
+  const scheduledProcesses = [...processes];
+  
+  // In RMS, processes with shorter periods get higher priority
+  // We'll use a combination of priority and burst time as "period"
+  scheduledProcesses.forEach(process => {
+    process.period = Math.max(process.burstTime + (10 - process.priority), process.burstTime);
+    process.utilization = process.burstTime / process.period;
+  });
+  
+  // Sort by period (rate monotonic principle)
+  scheduledProcesses.sort((a, b) => a.period - b.period);
+  
+  let currentTime = 0;
+  let totalEnergyUsed = 0;
+  
+  // Check schedulability using RMS utilization bound
+  const n = scheduledProcesses.length;
+  const utilizationBound = n * (Math.pow(2, 1/n) - 1);
+  const totalUtilization = scheduledProcesses.reduce((sum, proc) => sum + proc.utilization, 0);
+  const isSchedulable = totalUtilization <= utilizationBound;
+  
+  // Energy-aware RMS uses dynamic voltage scaling when there is slack
+  scheduledProcesses.forEach(process => {
+    process.startTime = Math.max(currentTime, process.arrivalTime);
+    
+    // If the task set is schedulable, we can use energy-saving techniques
+    let energyFactor;
+    if (isSchedulable) {
+      // Scale energy usage based on utilization and slack
+      const slack = utilizationBound - totalUtilization;
+      energyFactor = 1.0 - Math.min(slack * 0.5, 0.4);
+    } else {
+      // Run at full power if schedulability is at risk
+      energyFactor = 1.0;
+    }
+    
+    process.energyUsage = process.burstTime * energyFactor;
+    totalEnergyUsed += process.energyUsage;
+    
+    process.deadline = process.arrivalTime + process.period;
+    
+    process.rmsData = {
+      period: process.period,
+      utilization: process.utilization
+    };
+    
+    currentTime = process.startTime + process.burstTime;
+    
+    // Mark as executed
+    process.executed = process.burstTime;
+    process.status = 'completed';
+  });
+  
+  return {
+    updatedProcesses: scheduledProcesses,
+    energyUsed: totalEnergyUsed,
+    completionTime: currentTime
+  };
 }`
   };
   
